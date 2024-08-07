@@ -14,6 +14,9 @@ suno_client = Suno(
     model_version=ModelVersions.CHIRP_V3_5
 )
 
+# 设置标题最大长度
+MAX_TITLE_LENGTH = 50  # 这个值可能需要根据Suno API的实际限制进行调整
+
 def generate_lyrics(all_selections):
     prompt = f"""你是[世界頂尖的台語歌詞創作大師]，請你寫一首[充滿溫暖、浪漫、緩慢、有感情]的歌詞。
     描述[{all_selections}]。
@@ -35,7 +38,7 @@ def generate_theme(lyrics):
 
     {lyrics}
 
-    請提供一個簡潔而富有意境的主題。"""
+    請提供一個簡潔而富有意境的主題，不超過{MAX_TITLE_LENGTH}個字符。"""
 
     response = client.chat.completions.create(
         model="gpt-4o-mini",
@@ -44,19 +47,27 @@ def generate_theme(lyrics):
             {"role": "user", "content": prompt}
         ]
     )
-    return response.choices[0].message.content
+    theme = response.choices[0].message.content
+    return theme[:MAX_TITLE_LENGTH]  # 确保主题不超过最大长度
 
 def generate_song(lyrics, theme):
-    clips = suno_client.generate(
-        prompt=lyrics,
-        tags="六十年代台語歌曲風",
-        title=theme,
-        make_instrumental=False,
-        is_custom=True,
-        wait_audio=True
-    )
-    if clips:
-        return clips[0]
+    # 再次检查并截断主题长度，以确保安全
+    if len(theme) > MAX_TITLE_LENGTH:
+        theme = theme[:MAX_TITLE_LENGTH]
+    
+    try:
+        clips = suno_client.generate(
+            prompt=lyrics,
+            tags="六十年代台語歌曲風",
+            title=theme,
+            make_instrumental=False,
+            is_custom=True,
+            wait_audio=True
+        )
+        if clips:
+            return clips[0]
+    except Exception as e:
+        st.error(f"生成歌曲時發生錯誤: {str(e)}")
     return None
 
 def check_video_status(clip):
