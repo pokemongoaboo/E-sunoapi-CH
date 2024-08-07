@@ -2,15 +2,18 @@ import time
 import streamlit as st
 from suno import Suno, ModelVersions
 
-MAX_RETRIES = 60  # 最大重試次數
-RETRY_DELAY = 10  # 每次重試間隔秒數
-MAX_TITLE_LENGTH = 100  # 最大標題長度
+MAX_TITLE_LENGTH = 100
+CHECK_INTERVAL = 5  # 檢查間隔秒數
 
 def initialize_suno_client():
-    return Suno(
-        cookie=st.secrets["SUNO_COOKIE"],
-        model_version=ModelVersions.CHIRP_V3_5
-    )
+    try:
+        return Suno(
+            cookie=st.secrets["SUNO_COOKIE"],
+            model_version=ModelVersions.CHIRP_V3_5
+        )
+    except Exception as e:
+        st.error(f"初始化Suno客戶端時出錯: {str(e)}")
+        return None
 
 def generate_music(suno_client, lyrics, theme):
     try:
@@ -28,62 +31,51 @@ def generate_music(suno_client, lyrics, theme):
         st.error(f"生成歌曲時發生錯誤: {str(e)}")
     return None
 
-def wait_for_video_url(suno_client, clip_id):
-    retries = 0
-    
-    while retries < MAX_RETRIES:
-        all_clips = suno_client.get_clips()
-        clip = next((c for c in all_clips if c.id == clip_id), None)
-        
-        if clip:
-            if clip.video_url:
-                return clip.video_url
-            elif not clip.is_video_pending:
-                st.warning("視頻處理完成，但URL不可用")
-                return None
-        else:
-            st.warning(f"無法找到ID為 {clip_id} 的clip")
-            return None
-        
-        retries += 1
-        remaining_time = (MAX_RETRIES - retries) * RETRY_DELAY
-        st.info(f"等待視頻URL生成... (剩餘等待時間約 {remaining_time} 秒)")
-        time.sleep(RETRY_DELAY)
-    
-    st.error("等待視頻URL生成超時")
+def check_video_url(suno_client, clip_id):
+    try:
+        songs = suno_client.get_songs(song_ids=f"{clip_id}")
+        if songs and len(songs) > 0:
+            return songs[0].video_url
+    except Exception as e:
+        st.error(f"檢查視頻URL時發生錯誤: {str(e)}")
     return None
 
-def generate_and_wait_for_url(lyrics, theme):
-    suno_client = initialize_suno_client()
-    
-    with st.spinner('正在生成音樂...'):
-        clip = generate_music(suno_client, lyrics, theme)
-        if not clip:
-            st.error('音樂生成失敗')
-            return None
-        
-        st.success(f'音樂生成成功! Clip ID: {clip.id}')
-    
-    with st.spinner('正在等待視頻URL生成...'):
-        video_url = wait_for_video_url(suno_client, clip.id)
-        if video_url:
-            st.success('成功獲取視頻URL!')
-            return video_url
+def main():
+    st.title("Suno音樂生成與視頻URL等待器")
+
+    lyrics = st.text_area("請輸入歌詞", height=150)
+    theme = st.text_input("請輸入主題")
+
+    if st.button("生成音樂"):
+        if lyrics and theme:
+            suno_client = initialize_suno_client()
+            if not suno_client:
+                return
+
+            with st.spinner('正在生成音樂...'):
+                clip = generate_music(suno_client, lyrics, theme)
+                if not clip:
+                    st.error('音樂生成失敗')
+                    return
+
+            st.success(f'音樂生成成功! Clip ID: {clip.id}')
+            st.audio(clip.audio_url, format='audio/mp3')
+
+            video_url = None
+            placeholder = st.empty()
+
+            while not video_url:
+                placeholder.info('影片生成中，請稍候...')
+                video_url = check_video_url(suno_client, clip.id)
+                if not video_url:
+                    time.sleep(CHECK_INTERVAL)
+
+            placeholder.success(f'影片已生成: {video_url}')
+            if st.button('播放影片'):
+                st.video(video_url)
+
         else:
-            st.error('無法獲取視頻URL')
-            return None
+            st.error("請輸入歌詞和主題")
 
-# Streamlit 介面
-st.title("Suno音樂生成與視頻URL等待器")
-
-lyrics = st.text_area("請輸入歌詞", height=150)
-theme = st.text_input("請輸入主題")
-
-if st.button("生成音樂並獲取視頻URL"):
-    if lyrics and theme:
-        video_url = generate_and_wait_for_url(lyrics, theme)
-        if video_url:
-            st.markdown(f"視頻URL: {video_url}")
-            st.video(video_url)
-    else:
-        st.error("請輸入歌詞和主題")
+if __name__ == "__main__":
+    main()
