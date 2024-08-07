@@ -1,3 +1,5 @@
 SunoAI
 streamlit
 suno
+pillow
+openai
