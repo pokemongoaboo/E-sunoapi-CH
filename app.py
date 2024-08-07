@@ -2,83 +2,94 @@ import streamlit as st
 import os
 from suno import Suno, ModelVersions
 import base64
-import requests
 
 # Streamlit 應用設置
-st.set_page_config(page_title="Suno AI Music Generator", page_icon="🎵")
-st.title("Suno AI Music Generator")
+st.set_page_config(page_title="Suno AI Music & Video Generator", page_icon="🎵")
+st.title("Suno AI Music & Video Generator")
 
 # Suno 客戶端設置
 @st.cache_resource
 def get_suno_client():
-    cookie = st.secrets.get("SUNO_COOKIE")
-    if not cookie:
-        st.error("SUNO_COOKIE is not set in the secrets. Please configure it in the Streamlit Cloud settings.")
-        st.stop()
-    return Suno(cookie=cookie, model_version=ModelVersions.CHIRP_V3_5)
+    cookie = st.secrets["SUNO_COOKIE"]
+    return Suno(cookie=cookie)
 
-try:
-    client = get_suno_client()
-except Exception as e:
-    st.error(f"Failed to initialize Suno client: {str(e)}")
-    st.stop()
+client = get_suno_client()
 
 # 用戶輸入
-prompt = st.text_input("Enter a prompt for your music:", "A serene landscape")
+prompt = st.text_input("Enter a prompt for your music and video:", "A serene landscape with gentle piano music")
 
-if st.button("Generate Music"):
+# 模型選擇
+model_options = {
+    "Chirp v1": ModelVersions.CHIRP_V1,
+    "Bark v2": ModelVersions.BARK_V2,
+    "Chirp v3.5": ModelVersions.CHIRP_V3_5
+}
+selected_model = st.selectbox("Choose a model:", list(model_options.keys()))
+
+if st.button("Generate Music and Video"):
     try:
-        with st.spinner("Generating music..."):
-            songs = client.generate(prompt=prompt, is_custom=False, wait_audio=True)
+        with st.spinner("Generating music and video..."):
+            results = client.generate(
+                prompt=prompt, 
+                model_version=model_options[selected_model],
+                video_generation=True,
+                duration=30,  # 設置視頻持續時間（秒）
+                wait_audio=True,
+                wait_video=True
+            )
         
-        if songs:
-            for i, song in enumerate(songs):
-                st.success(f"Song {i+1} generated successfully!")
+        if results:
+            for i, result in enumerate(results):
+                st.success(f"Music and Video {i+1} generated successfully!")
                 
-                # 下載歌曲
-                try:
-                    file_path = client.download(song=song)
-                except Exception as e:
-                    st.error(f"Failed to download song {i+1}: {str(e)}")
-                    continue
+                # 下載音頻
+                audio_path = client.download(result, audio_or_video='audio')
                 
-                # 讀取音樂文件
-                with open(file_path, "rb") as f:
+                # 下載視頻
+                video_path = client.download(result, audio_or_video='video')
+                
+                # 讀取音頻文件
+                with open(audio_path, "rb") as f:
                     audio_bytes = f.read()
+                
+                # 讀取視頻文件
+                with open(video_path, "rb") as f:
+                    video_bytes = f.read()
                 
                 # 在 Streamlit 中顯示音頻播放器
                 st.audio(audio_bytes, format="audio/mp3")
                 
-                # 提供下載鏈接
+                # 在 Streamlit 中顯示視頻播放器
+                st.video(video_bytes)
+                
+                # 提供音頻下載鏈接
                 st.download_button(
-                    label=f"Download Song {i+1}",
+                    label=f"Download Audio {i+1}",
                     data=audio_bytes,
                     file_name=f"SunoMusic_{i+1}.mp3",
                     mime="audio/mp3"
                 )
+                
+                # 提供視頻下載鏈接
+                st.download_button(
+                    label=f"Download Video {i+1}",
+                    data=video_bytes,
+                    file_name=f"SunoVideo_{i+1}.mp4",
+                    mime="video/mp4"
+                )
         else:
-            st.warning("No songs were generated. Please try a different prompt.")
-    except requests.exceptions.RequestException as e:
-        st.error(f"Network error occurred: {str(e)}")
+            st.error("Failed to generate music and video. Please try again.")
     except Exception as e:
-        st.error(f"An error occurred while generating music: {str(e)}")
-        st.info("Please check your Suno API credentials and ensure you have the necessary permissions.")
+        st.error(f"An error occurred: {str(e)}")
 
 # 添加一些使用說明
 st.markdown("""
 ## How to use:
-1. Enter a prompt describing the kind of music you want.
-2. Click 'Generate Music' to create your AI-generated song.
-3. Listen to the generated music using the audio player.
-4. Download the MP3 file if you like the result.
+1. Enter a prompt describing the kind of music and video you want.
+2. Choose a Suno AI model from the dropdown menu.
+3. Click 'Generate Music and Video' to create your AI-generated content.
+4. Listen to the generated music and watch the video using the embedded players.
+5. Download the MP3 audio file or MP4 video file if you like the result.
 
-Note: Music generation may take a few minutes. Please be patient!
+Note: Music and video generation may take a few minutes. Please be patient!
 """)
-
-# 添加錯誤報告功能
-st.markdown("---")
-st.subheader("Having issues?")
-error_description = st.text_area("Describe the error you're experiencing:")
-if st.button("Submit Error Report"):
-    # 這裡你可以添加將錯誤報告發送到某個端點的邏輯
-    st.success("Thank you for your report. We'll look into it.")
