@@ -1,3 +1,4 @@
+suno
 SunoAI
 streamlit
 suno
