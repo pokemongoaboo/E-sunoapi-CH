@@ -54,7 +54,7 @@ def generate_song(lyrics, theme):
     try:
         clips = suno_client.generate(
             prompt=lyrics,
-            tags="六十年代台語歌曲風, 台語歌, 台語男歌手",
+            tags="六十年代台語歌曲風, 台語男歌手, 台灣話, 台語歌",
             title=theme[:MAX_TITLE_LENGTH],
             make_instrumental=False,
             is_custom=True,
@@ -66,12 +66,12 @@ def generate_song(lyrics, theme):
         st.error(f"生成歌曲時發生錯誤: {str(e)}")
     return None
 
-def check_video_status(clip):
-    max_attempts = 30  # 最多檢查30次，每次間隔10秒
+def check_video_status(clip, max_attempts=30, interval=10):
     progress_bar = st.progress(0)
     status_text = st.empty()
     
     for attempt in range(max_attempts):
+        clip = suno_client.get_clip(clip.id)
         if not clip.is_video_pending:
             progress_bar.progress(1.0)
             status_text.text("視頻生成完成！")
@@ -81,8 +81,7 @@ def check_video_status(clip):
         progress_bar.progress(progress)
         status_text.text(f"正在等待視頻生成，已嘗試 {attempt + 1} 次...")
         
-        time.sleep(10)
-        clip = suno_client.get_clip(clip.id)
+        time.sleep(interval)
     
     status_text.text("視頻生成超時。")
     return None
@@ -93,9 +92,9 @@ def main():
     categories = {
         "主題": ["懷念舊時", "晚年快樂", "金婚慶典", "孫仔陪伴", "永遠的情份"],
         "心情": ["溫暖", "感恩", "柔情蜜意", "足幸福", "懷舊思念"],
-        "物品": ["舊相片", "手織毛衣", "古董時鐘", "結婚戒指", "祖傳珠寶"],
+        "物品": ["舊照片", "手織毛衣", "古董時鐘", "結婚戒指", "祖傳珠寶"],
         "場景": ["櫻花樹腳", "古厝庭園", "夕陽下的長椅", "餐廳的燭光晚餐", "鄉下小路"],
-        "時間": ["暗暝", "天光", "透早", "黃昏", "三更半暝"],
+        "時間": ["透早", "三更半暝", "天光", "黃昏", "黃昏"],
         "人物": ["老伴", "老朋友", "孫仔", "囝仔", "一世人伴"]    
     }
 
@@ -143,13 +142,14 @@ def main():
             st.audio(clip.audio_url)
 
             st.subheader("歌曲影片生成狀態：")
+            video_placeholder = st.empty()
+            
             video_url = check_video_status(clip)
             
             if video_url:
-                st.subheader("歌曲影片：")
-                st.video(video_url)
+                video_placeholder.video(video_url)
             else:
-                st.warning("歌曲影片生成未完成。您可以稍後再次訪問此頁面查看是否生成成功。")
+                video_placeholder.warning("歌曲影片生成失敗。請稍後再試。")
         else:
             st.error("歌曲生成失敗，請稍後再試。")
 
