@@ -1,8 +1,8 @@
 import streamlit as st
 import json
 from openai import OpenAI
-from suno import Suno, ModelVersions
 import time
+from suno import Suno, ModelVersions
 
 # OpenAI API 设置
 openai_api_key = st.secrets["OPENAI_API_KEY"]
