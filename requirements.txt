@@ -13,3 +13,5 @@ pydub
 matplotlib
 ipython
 torch
+ffmpeg
+avconv
