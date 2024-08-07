@@ -12,3 +12,4 @@ numpy
 pydub
 matplotlib
 ipython
+torch
