@@ -4,17 +4,17 @@ from openai import OpenAI
 import time
 from suno import Suno, ModelVersions
 
-# OpenAI API 设置
+# OpenAI API 設置
 openai_api_key = st.secrets["OPENAI_API_KEY"]
 client = OpenAI(api_key=openai_api_key)
 
-# Suno 设置
+# Suno 設置
 suno_client = Suno(
     cookie=st.secrets["SUNO_COOKIE"],
     model_version=ModelVersions.CHIRP_V3_5
 )
 
-# 设置标题最大长度
+# 設置標題最大長度
 MAX_TITLE_LENGTH = 50
 
 def generate_lyrics(all_selections):
@@ -54,7 +54,7 @@ def generate_song(lyrics, theme):
     try:
         clips = suno_client.generate(
             prompt=lyrics,
-            tags="六十年代台語歌曲風",
+            tags="六十年代台語歌曲風, 台語歌, 台語男歌手",
             title=theme[:MAX_TITLE_LENGTH],
             make_instrumental=False,
             is_custom=True,
@@ -67,7 +67,7 @@ def generate_song(lyrics, theme):
     return None
 
 def check_video_status(clip):
-    max_attempts = 30  # 最多检查30次，每次间隔10秒
+    max_attempts = 30  # 最多檢查30次，每次間隔10秒
     progress_bar = st.progress(0)
     status_text = st.empty()
     
@@ -92,9 +92,10 @@ def main():
 
     categories = {
         "主題": ["懷念舊時", "晚年快樂", "金婚慶典", "孫仔陪伴", "永遠的情份"],
-        "心情": ["溫暖", "感恩", "糖甘蜜甜", "足幸福", "懷舊思念"],
-        "物品": ["舊相片", "手織毛衣衫", "古董時鐘", "結婚手戒指", "祖傳珠寶"],
-        "場景": ["櫻花樹腳", "古厝庭園", "夕陽下的長椅", "餐廳的燭光晚餐", "鄉下路仔"],
+        "心情": ["溫暖", "感恩", "柔情蜜意", "足幸福", "懷舊思念"],
+        "物品": ["舊相片", "手織毛衣", "古董時鐘", "結婚戒指", "祖傳珠寶"],
+        "場景": ["櫻花樹腳", "古厝庭園", "夕陽下的長椅", "餐廳的燭光晚餐", "鄉下小路"],
+        "時間": ["暗暝", "天光", "透早", "黃昏", "三更半暝"],
         "人物": ["老伴", "老朋友", "孫仔", "囝仔", "一世人伴"]    
     }
 
@@ -148,7 +149,7 @@ def main():
                 st.subheader("歌曲影片：")
                 st.video(video_url)
             else:
-                st.warning("歌曲影片生成超時，請稍後檢查或重試。您可以稍後再次訪問此頁面查看是否生成成功。")
+                st.warning("歌曲影片生成未完成。您可以稍後再次訪問此頁面查看是否生成成功。")
         else:
             st.error("歌曲生成失敗，請稍後再試。")
 
