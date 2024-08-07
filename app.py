@@ -2,22 +2,6 @@ import streamlit as st
 import json
 from openai import OpenAI
 import time
-import sys
-
-# 条件导入 IPython
-try:
-    from IPython.display import display_html
-except ImportError:
-    display_html = None
-
-# 如果 IPython 不可用，提供一个替代函数
-if display_html is None:
-    def display_html(html):
-        st.markdown(html, unsafe_allow_html=True)
-
-# 修改 sys.modules 来欺骗 Suno
-sys.modules['IPython'] = type('IPythonMock', (), {'display': type('DisplayMock', (), {'display_html': display_html})})
-
 from suno import Suno, ModelVersions
 
 # OpenAI API 设置
@@ -150,13 +134,7 @@ def main():
             
             if video_url:
                 st.subheader("歌曲影片：")
-                video_html = f"""
-                    <video controls width="100%">
-                        <source src="{video_url}" type="video/mp4">
-                        您的浏览器不支持video标签。
-                    </video>
-                """
-                st.markdown(video_html, unsafe_allow_html=True)
+                st.video(video_url)
             else:
                 st.warning("歌曲影片仍在生成中，請稍後再試。")
         else:
