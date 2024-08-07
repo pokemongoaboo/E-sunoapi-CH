@@ -45,10 +45,12 @@ def main():
 
     lyrics = st.text_area("請輸入歌詞", height=150)
     theme = st.text_input("請輸入主題")
-
+    suno_client = initialize_suno_client()
+    credits_info = client.get_credits()
+    st.write(credits_info)
     if st.button("生成音樂"):
         if lyrics and theme:
-            suno_client = initialize_suno_client()
+            #suno_client = initialize_suno_client()
             if not suno_client:
                 return
 
