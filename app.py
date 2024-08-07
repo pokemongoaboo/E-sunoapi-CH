@@ -2,6 +2,7 @@ import streamlit as st
 import json
 from openai import OpenAI
 from suno import Suno, ModelVersions
+import time
 
 # OpenAI API 设置
 openai_api_key = st.secrets["OPENAI_API_KEY"]
@@ -21,7 +22,7 @@ def generate_lyrics(all_selections):
     最前面加上 [intro 阮阮] 最後面加上[End]"""
 
     response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
+        model="gpt-4o-mini",
         messages=[
             {"role": "system", "content": "You are a professional Taiwanese song lyricist."},
             {"role": "user", "content": prompt}
@@ -37,7 +38,7 @@ def generate_theme(lyrics):
     請提供一個簡潔而富有意境的主題。"""
 
     response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
+        model="gpt-4o-mini",
         messages=[
             {"role": "system", "content": "You are a professional song theme creator."},
             {"role": "user", "content": prompt}
@@ -52,9 +53,20 @@ def generate_song(lyrics, theme):
         title=theme,
         make_instrumental=False,
         is_custom=True,
-        wait_audio=True  # 改为True以等待音频生成完成
+        wait_audio=True
     )
-    return clips[0].audio_url if clips else None
+    if clips:
+        return clips[0]
+    return None
+
+def check_video_status(clip):
+    max_attempts = 30  # 最多检查30次，每次间隔10秒
+    for _ in range(max_attempts):
+        if not clip.is_video_pending:
+            return clip.video_url
+        time.sleep(10)
+        clip = suno_client.get_clip(clip.id)
+    return None
 
 def main():
     st.title("台語歌曲生成器")
@@ -104,11 +116,26 @@ def main():
         st.write(theme)
 
         with st.spinner('正在生成歌曲，請稍候...'):
-            song_url = generate_song(lyrics, theme)
+            clip = generate_song(lyrics, theme)
         
-        if song_url:
+        if clip:
             st.subheader("生成的歌曲：")
-            st.audio(song_url)
+            st.audio(clip.audio_url)
+
+            with st.spinner('正在處理歌曲影片，請稍候...'):
+                video_url = check_video_status(clip)
+            
+            if video_url:
+                st.subheader("歌曲影片：")
+                video_html = f"""
+                    <video controls width="100%">
+                        <source src="{video_url}" type="video/mp4">
+                        您的浏览器不支持video标签。
+                    </video>
+                """
+                st.markdown(video_html, unsafe_allow_html=True)
+            else:
+                st.warning("歌曲影片仍在生成中，請稍後再試。")
         else:
             st.error("歌曲生成失敗，請稍後再試。")
 
