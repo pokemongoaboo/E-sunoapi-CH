@@ -3,3 +3,10 @@ streamlit
 suno
 pillow
 openai
+streamlit
+openai
+librosa
+scipy
+pandas
+numpy
+pydub
