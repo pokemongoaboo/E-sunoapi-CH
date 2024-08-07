@@ -1,13 +1,4 @@
-suno
+SunoAI
 streamlit
-suno
 pillow
 openai
-librosa
-scipy
-pandas
-numpy
-pydub
-ipython
-torch
-ffmpeg
