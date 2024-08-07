@@ -2,6 +2,22 @@ import streamlit as st
 import json
 from openai import OpenAI
 import time
+import sys
+
+# 条件导入 IPython
+try:
+    from IPython.display import display_html
+except ImportError:
+    display_html = None
+
+# 如果 IPython 不可用，提供一个替代函数
+if display_html is None:
+    def display_html(html):
+        st.markdown(html, unsafe_allow_html=True)
+
+# 修改 sys.modules 来欺骗 Suno
+sys.modules['IPython'] = type('IPythonMock', (), {'display': type('DisplayMock', (), {'display_html': display_html})})
+
 from suno import Suno, ModelVersions
 
 # OpenAI API 设置
@@ -15,7 +31,7 @@ suno_client = Suno(
 )
 
 # 设置标题最大长度
-MAX_TITLE_LENGTH = 50  # 这个值可能需要根据Suno API的实际限制进行调整
+MAX_TITLE_LENGTH = 50
 
 def generate_lyrics(all_selections):
     prompt = f"""你是[世界頂尖的台語歌詞創作大師]，請你寫一首[充滿溫暖、浪漫、緩慢、有感情]的歌詞。
@@ -48,18 +64,14 @@ def generate_theme(lyrics):
         ]
     )
     theme = response.choices[0].message.content
-    return theme[:MAX_TITLE_LENGTH]  # 确保主题不超过最大长度
+    return theme[:MAX_TITLE_LENGTH]
 
 def generate_song(lyrics, theme):
-    # 再次检查并截断主题长度，以确保安全
-    if len(theme) > MAX_TITLE_LENGTH:
-        theme = theme[:MAX_TITLE_LENGTH]
-    
     try:
         clips = suno_client.generate(
             prompt=lyrics,
             tags="六十年代台語歌曲風",
-            title=theme,
+            title=theme[:MAX_TITLE_LENGTH],
             make_instrumental=False,
             is_custom=True,
             wait_audio=True
