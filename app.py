@@ -60,7 +60,7 @@ def generate_music(suno_client, lyrics, theme):
             is_custom=True,
             wait_audio=True
         )
-        if clips:
+        if clips and clips[0].audio_url:
             return clips[0]
     except Exception as e:
         st.error(f"生成歌曲時發生錯誤: {str(e)}")
@@ -148,16 +148,26 @@ def main():
                     st.error('音樂生成失敗')
                     return
             st.success(f'音樂生成成功! Clip ID: {st.session_state.clip.id}')
+            
+            # 立即顯示音頻播放器
             st.audio(st.session_state.clip.audio_url, format='audio/mp3')
             
+            # 開始檢查視頻URL
             st.session_state.video_url = None
             placeholder = st.empty()
-            while not st.session_state.video_url:
-                placeholder.info('影片生成中，請稍候...')
-                st.session_state.video_url = check_video_url(suno_client, st.session_state.clip.id)
-                if not st.session_state.video_url:
-                    time.sleep(CHECK_INTERVAL)
-            placeholder.success(f'影片已生成: {st.session_state.video_url}')
+            placeholder.info('影片生成中，請稍候...')
+            
+            # 使用非阻塞方式檢查視頻URL
+            for _ in range(60):  # 最多等待5分鐘 (60 * 5 秒)
+                video_url = check_video_url(suno_client, st.session_state.clip.id)
+                if video_url:
+                    st.session_state.video_url = video_url
+                    placeholder.success(f'影片已生成: {st.session_state.video_url}')
+                    break
+                time.sleep(CHECK_INTERVAL)
+            
+            if not st.session_state.video_url:
+                placeholder.warning('影片生成超時，請稍後再試。')
 
     # 當 video_url 存在時顯示播放按鈕
     if st.session_state.video_url:
