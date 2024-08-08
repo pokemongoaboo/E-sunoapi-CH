@@ -138,6 +138,10 @@ def main():
         credits_info = suno_client.get_credits()
         st.write(credits_info)
 
+    # 創建可更新的佔位符
+    audio_player = st.empty()
+    video_status = st.empty()
+
     if st.session_state.lyrics and st.session_state.theme:
         if st.button("生成音樂"):
             if not suno_client:
@@ -150,24 +154,23 @@ def main():
             st.success(f'音樂生成成功! Clip ID: {st.session_state.clip.id}')
             
             # 立即顯示音頻播放器
-            st.audio(st.session_state.clip.audio_url, format='audio/mp3')
+            audio_player.audio(st.session_state.clip.audio_url, format='audio/mp3')
             
             # 開始檢查視頻URL
             st.session_state.video_url = None
-            placeholder = st.empty()
-            placeholder.info('影片生成中，請稍候...')
+            video_status.info('影片生成中，請稍候...')
             
             # 使用非阻塞方式檢查視頻URL
             for _ in range(60):  # 最多等待5分鐘 (60 * 5 秒)
                 video_url = check_video_url(suno_client, st.session_state.clip.id)
                 if video_url:
                     st.session_state.video_url = video_url
-                    placeholder.success(f'影片已生成: {st.session_state.video_url}')
+                    video_status.success(f'影片已生成: {st.session_state.video_url}')
                     break
                 time.sleep(CHECK_INTERVAL)
             
             if not st.session_state.video_url:
-                placeholder.warning('影片生成超時，請稍後再試。')
+                video_status.warning('影片生成超時，請稍後再試。')
 
     # 當 video_url 存在時顯示播放按鈕
     if st.session_state.video_url:
