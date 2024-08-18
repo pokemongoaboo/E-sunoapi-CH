@@ -76,7 +76,7 @@ def check_video_url(suno_client, clip_id):
     return None
 
 def main():
-    st.title("台語歌曲生成器")
+    st.title("音樂歌曲生成器(Music Generator)")
 
     # 使用 session_state 來保存狀態
     if 'clip' not in st.session_state:
@@ -113,7 +113,7 @@ def main():
         
         selections[category] = selected
 
-    if st.button("生成歌詞和主題"):
+    if st.button("生成歌詞和主題(Generate Lyrics and Themes"):
         st.subheader("您的選擇：")
         for category, selection in selections.items():
             st.write(f"{category}: {', '.join(selection)}")
@@ -143,10 +143,10 @@ def main():
     video_status = st.empty()
 
     if st.session_state.lyrics and st.session_state.theme:
-        if st.button("生成音樂"):
+        if st.button("生成音樂(Generate Music)"):
             if not suno_client:
                 return
-            with st.spinner('正在生成音樂...'):
+            with st.spinner('正在生成音樂(Music generating)...'):
                 st.session_state.clip = generate_music(suno_client, st.session_state.lyrics, st.session_state.theme)
                 if not st.session_state.clip:
                     st.error('音樂生成失敗')
@@ -158,7 +158,7 @@ def main():
             
             # 開始檢查視頻URL
             st.session_state.video_url = None
-            video_status.info('影片生成中，請稍候...')
+            video_status.info('影片生成中(Video Generating)，請稍候...')
             
             # 使用非阻塞方式檢查視頻URL
             for _ in range(60):  # 最多等待5分鐘 (60 * 5 秒)
@@ -174,7 +174,7 @@ def main():
 
     # 當 video_url 存在時顯示播放按鈕
     if st.session_state.video_url:
-        if st.button('播放影片'):
+        if st.button('播放影片(Play video)'):
             video_html = f"""
                 <video controls width="100%">
                 <source src="{st.session_state.video_url}" type="video/mp4">
