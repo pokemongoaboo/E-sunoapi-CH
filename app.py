@@ -16,7 +16,7 @@ def initialize_suno_client():
     try:
         return Suno(
             cookie=st.secrets["SUNO_COOKIE"],
-            model_version=ModelVersions.CHIRP_V3_0
+            model_version=ModelVersions.CHIRP_V3_5
         )
     except Exception as e:
         st.error(f"初始化Suno客戶端時出錯: {str(e)}")
@@ -134,9 +134,9 @@ def main():
 
     # 初始化 Suno 客戶端並顯示 credits_info
     suno_client = initialize_suno_client()
-    if suno_client:
-        credits_info = suno_client.get_credits()
-        st.write(credits_info)
+    #if suno_client:
+    #    credits_info = suno_client.get_credits()
+    #    st.write(credits_info)
 
     # 創建可更新的佔位符
     audio_player = st.empty()
