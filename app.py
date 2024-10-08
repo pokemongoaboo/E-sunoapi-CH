@@ -134,9 +134,18 @@ def main():
 
     # 初始化 Suno 客戶端並顯示 credits_info
     suno_client = initialize_suno_client()
-    #if suno_client:
-    #    credits_info = suno_client.get_credits()
-    #    st.write(credits_info)
+    if suno_client:
+        try:
+            credits_info = suno_client.get_credits()
+            st.write(credits_info['credits_left'])
+            st.write(credits_info['period'])
+            st.write(credits_info['monthly_limit'])
+            st.write(credits_info['monthly_usage'])
+        except Exception as e:
+            return {
+            'error': str(e)
+        }
+            
 
     # 創建可更新的佔位符
     audio_player = st.empty()
