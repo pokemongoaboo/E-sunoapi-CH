@@ -142,10 +142,6 @@ def main():
             st.write(credits_info['monthly_limit'])
             st.write(credits_info['monthly_usage'])
         except Exception as e:
-            st.write(credits_info['credits_left'])
-            st.write(credits_info['period'])
-            st.write(credits_info['monthly_limit'])
-            st.write(credits_info['monthly_usage'])
             st.error(f"取得credits_info 過程: {str(e)}")
             return None
             
