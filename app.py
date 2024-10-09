@@ -54,7 +54,7 @@ def generate_music(suno_client, lyrics, theme):
     try:
         clips = suno_client.generate(
             prompt=lyrics,
-            tags="六十年代國語歌曲風, 國語男歌手, 民歌腔, 國語歌",
+            tags="六十年代國語歌曲風, 國語歌手, 民歌腔,民謠風, 國語歌",
             title=theme[:MAX_TITLE_LENGTH],
             make_instrumental=False,
             is_custom=True,
