@@ -23,9 +23,9 @@ def initialize_suno_client():
         return None
 
 def generate_lyrics(all_selections):
-    prompt = f"""你是[世界頂尖的英語歌詞創作大師]，請你寫一首[充滿溫暖、浪漫、緩慢、有感情]的英文歌詞。
+    prompt = f"""你是[世界頂尖的國語歌詞創作大師]，請你寫一首[充滿溫暖、浪漫、緩慢、有感情]的中文歌詞。
     描述[{all_selections}]。
-    音樂的風格是[六十年代英語歌曲風]。
+    音樂的風格是[六十年代國語歌曲風]。
     詞曲的結構是[Verse1]-[Chorus]-[Verse2]-[Chorus]-[Bride]-[Chorus]-[Outro](結構兩旁要加上方號[]，並與上一段有一個空格)
     最前面加上 [intro] 最後面加上[End]"""
     response = client.chat.completions.create(
@@ -54,7 +54,7 @@ def generate_music(suno_client, lyrics, theme):
     try:
         clips = suno_client.generate(
             prompt=lyrics,
-            tags="六十年代英語歌曲風, 英語女歌手, 英倫腔, 英語歌",
+            tags="六十年代國語歌曲風, 國語男歌手, 民歌腔, 國語歌",
             title=theme[:MAX_TITLE_LENGTH],
             make_instrumental=False,
             is_custom=True,
